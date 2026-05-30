@@ -22,7 +22,9 @@ jobs:
         include-prerelease: true
 
     - name: Restore NuGet dependencies
-      run: dotnet restore F1StrategySimulator/F1StrategySimulator.csproj
+      # Добавляем правильный двойной путь
+      run: dotnet restore F1StrategySimulator/F1StrategySimulator/F1StrategySimulator.csproj
 
     - name: Compile solution (Release)
-      run: dotnet build F1StrategySimulator/F1StrategySimulator.csproj --configuration Release
+      # И здесь тоже удваиваем папку
+      run: dotnet build F1StrategySimulator/F1StrategySimulator/F1StrategySimulator.csproj --configuration Release
