@@ -9,7 +9,7 @@ namespace F1StrategySimulator
         {
             Bolid bl = new Bolid();
 
-            while (true)
+            while (bl.aging == 0)
             { 
                 Console.Clear();
                 Console.WriteLine("=== Добро пожаловать в F1 симулятор ===\n\n");
@@ -33,6 +33,7 @@ namespace F1StrategySimulator
                 Console.WriteLine("\nНажмите любую клавишу для продолжения...");
                 Console.ReadKey();
             }
+            bl.StartRace();
         }
     }
 
@@ -50,9 +51,47 @@ namespace F1StrategySimulator
                 case "1": aging = 100; break;
                 case "2": aging = 150; break;
                 case "3": aging = 200; break;
-                default: aging = 0; break;
+                default: Console.WriteLine("Неверный выбор! Попробуйте снова"); ; break;
             }
         }
+
+        public void StartRace()
+        {
+            Console.Clear();
+            int temp = aging;
+            Console.WriteLine("=== Гонка началась ===");
+            for (int lap = 0; lap<10; lap++)
+            {
+                if (temp == 100)
+                {
+                    aging -= 15;
+                }
+                else if (temp == 150)
+                {
+                    aging -= 10;
+                }
+                else if (temp == 200)
+                {
+                    aging -= 5;
+                }
+
+                Console.WriteLine($"Текущий круг {lap+1}");
+
+                if (aging < 0)
+                {
+                    Console.WriteLine($"Состояние шин 0%. Шины умерли");
+                }
+                else
+                {
+                    Console.WriteLine($"Состояние шин {(aging * 100) / temp}%");
+                }
+
+                Console.WriteLine("\nНажмите любую клавишу для продолжения...");
+                Console.ReadKey();
+            }
+        }
+
+
     }
 
 }
