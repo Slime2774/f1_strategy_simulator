@@ -17,10 +17,14 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        # Включаем поддержку preview-версий и ставим 10-й .NET
+        dotnet-version: '10.0.x'
+        include-prerelease: true
 
     - name: Restore NuGet dependencies
-      run: dotnet restore
+      # Добавляем правильный двойной путь
+      run: dotnet restore F1StrategySimulator/F1StrategySimulator/F1StrategySimulator.csproj
 
     - name: Compile solution (Release)
-      run: dotnet build --no-restore --configuration Release
+      # И здесь тоже удваиваем папку
+      run: dotnet build F1StrategySimulator/F1StrategySimulator/F1StrategySimulator.csproj --configuration Release
