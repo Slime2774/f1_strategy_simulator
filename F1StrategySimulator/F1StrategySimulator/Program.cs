@@ -108,12 +108,25 @@ namespace F1StrategySimulator
                     lapModificator = 1;
                 }
 
+
+                
+
                 double currentLapTime = baseLapTime + lapModificator + (rnd.NextDouble() * 0.5);
                 int EventChance = rnd.Next(1, 6);
                 if (EventChance == 3)
                 {
                     Console.WriteLine("Жёлтые флаги! На трассе пейс-кар. Скорость падает!");
                     currentLapTime += 15;
+                }
+
+                if (CrashSystem() == 1)
+                {
+                    currentLapTime += 10;
+                }
+                else if (CrashSystem() == 0)
+                {
+                    Console.WriteLine($"Отлично {Name}. Круг без проишествий");
+
                 }
 
                 totalTime += currentLapTime;
@@ -130,6 +143,7 @@ namespace F1StrategySimulator
                 Console.WriteLine($"Текущее время круга {currentLapTime:F3}");
                 Console.WriteLine("\nНажмите любую клавишу для продолжения...");
                 Console.ReadKey();
+                Console.Clear();
             }
             Console.Clear();
             Console.WriteLine("\n=== Гонка окончена! ===");
@@ -150,6 +164,21 @@ namespace F1StrategySimulator
         {
             userInput = "";
             aging = 0;
+        }
+
+        public int CrashSystem()
+        {
+            Random rnd = new Random();
+
+            int CrushEvent = rnd.Next(1, 6);
+
+
+            if (CrushEvent >= 5)
+            {
+                Console.WriteLine("Вы потеряли переднее антикрыло! Время круга увеличено");
+                 return 1;
+            }
+            return 0;
         }
 
     }
