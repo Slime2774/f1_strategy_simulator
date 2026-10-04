@@ -119,11 +119,13 @@ namespace F1StrategySimulator
                     currentLapTime += 15;
                 }
 
-                if (CrashSystem() == 1)
+                int crush = CrashSystem();
+
+                if (crush == 1)
                 {
                     currentLapTime += 10;
                 }
-                else if (CrashSystem() == 0)
+                else
                 {
                     Console.WriteLine($"Отлично {Name}. Круг без проишествий");
 
