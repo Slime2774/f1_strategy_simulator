@@ -1,188 +1,80 @@
-﻿using System.Diagnostics;
-using static F1StrategySimulator.Bolid;
-
-namespace F1StrategySimulator
+﻿namespace F1StrategySimulator
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Bolid bl = new Bolid();
-            Console.WriteLine("Введите своё имя:\n");
-            bl.Name = Console.ReadLine();
+            RaceEngine re = new RaceEngine();
+            re.AddPlayer("Max", TyreCompound.Soft);
+            re.AddPlayer("Lewis", TyreCompound.Hard);
 
-            while (true)
+            while (!re.IsFinished)
             {
-                while (bl.aging == 0)
+                Console.WriteLine("==========================================");
+                Console.WriteLine($"Круг {re.CurrentLap + 1} из {re.TotalLaps} | Погода: {re.CurrentWeather}");
+                Console.WriteLine("------------------------------------------");
+
+                // Вывод телеметрии каждого болида перед кругом
+                foreach (var p in re.Players)
                 {
-                    Console.Clear();
-                    Console.WriteLine("=== Добро пожаловать в F1 симулятор ===\n\n");
+                    string status = p.IsDNF ? "DNF" : $"{p.CurrentTyre} ({p.TyreHealth:F1}%) | Пит-стопов: {p.PitStopsCount}";
+                    Console.WriteLine($"[{p.Id}] {p.Name}: {status}");
+                }
+                Console.WriteLine();
 
-                    Console.WriteLine("=== Выберите ваши шины ===\n");
-                    Console.WriteLine("1. Soft (Быстрые, но быстро изнашиваются)\n");
-                    Console.WriteLine("2. Medium (Стандартные)\n");
-                    Console.WriteLine("3. Hard (Долговечные, но медленные)\n");
-                    bl.userInput = Console.ReadLine();
+                var decisions = new List<LapDecision>();
 
+                foreach (var player in re.Players)
+                {
+                    if (player.IsDNF) continue;
 
-                    try
+                    Console.WriteLine($"--- Ход игрока {player.Name} ---");
+                    Console.Write("Выберите темп (1 - Balanced, 2 - Push, 3 - Save): ");
+                    string? paceInput = Console.ReadLine();
+
+                    PaceMode pace = paceInput switch
                     {
-                        bl.SetTyreStrategy(bl.userInput);
-                        Console.WriteLine($"Вы выбрали шины. Стартовый ресурс: {bl.aging} кругов/у.е.");
-                    }
-                    catch (Exception ex)
+                        "2" => PaceMode.Push,
+                        "3" => PaceMode.Save,
+                        _ => PaceMode.Balanced
+                    };
+
+                    Console.Write("Пит-стоп? (0 - Нет, 1 - Soft, 2 - Medium, 3 - Hard, 4 - Inter, 5 - Wet): ");
+                    string? pitInput = Console.ReadLine();
+
+                    TyreCompound? pitTyre = pitInput switch
                     {
-                        Console.WriteLine($"Ошибка: {ex.Message}");
+                        "1" => TyreCompound.Soft,
+                        "2" => TyreCompound.Medium,
+                        "3" => TyreCompound.Hard,
+                        "4" => TyreCompound.Intermediate,
+                        "5" => TyreCompound.Wet,
+                        _ => null
+                    };
+
+                    decisions.Add(new LapDecision(player.Id, pace, pitTyre));
+                }
+
+                // Расчёт круга
+                var results = re.SimulateLap(decisions);
+
+                Console.WriteLine("\n--- Итоги круга ---");
+                foreach (var r in results)
+                {
+                    if (r.IsDNF)
+                    {
+                        Console.WriteLine($"P{r.Position} {r.PlayerName} — СХОД ({r.Event})");
+                        continue;
                     }
-                    Console.WriteLine("\nНажмите любую клавишу для продолжения...");
-                    Console.ReadKey();
-                }
-                bl.StartRace();
 
-                Console.WriteLine($"\n{bl.Name} хочешь начать новую гонку?");
-                Console.WriteLine("1. Да, погнали");
-                Console.WriteLine("2. Нет, выйти из симулятора");
-                string ChoiseRace = Console.ReadLine();
-                
-                if (ChoiseRace == "1")
-                {
-                    bl.RestartRace();
+                    string gap = r.Position == 1 ? "Лидер" : $"+{r.GapToLeader:F3}с";
+                    string eventText = r.Event != RaceEventType.None ? $" | Событие: {r.Event}" : "";
+                    Console.WriteLine($"P{r.Position} {r.PlayerName} | Круг: {r.LapTime:F3}с | {gap} | Шины: {r.CurrentTyre} ({r.TyreHealth:F1}%){eventText}");
                 }
-
-                else if (ChoiseRace == "2")
-                {
-                    Console.WriteLine("Спасибо за игру! До встери на трассе!");
-                    break;
-                }
+                Console.WriteLine();
             }
+
+            Console.WriteLine("Гонка завершена!");
         }
     }
-
-    class Bolid
-    {
-        public string Name { get; set; }
-
-        public string userInput { get; set; }
-        
-        public int aging { get; private set; }
-
-        public double totalTime {  get; private set; }
-
-        public void SetTyreStrategy(string answer)
-        {
-            totalTime = 0;
-            userInput = answer;
-            switch (answer)
-            {
-                case "1": aging = 100; break;
-                case "2": aging = 150; break;
-                case "3": aging = 200; break;
-                default: Console.WriteLine("Неверный выбор! Попробуйте снова"); ; break;
-            }
-        }
-
-        public void StartRace()
-        {
-            Console.Clear();
-            int temp = aging;
-            double baseLapTime = 80.0;
-            double lapModificator = 0;
-
-            Random rnd = new Random();
-            Console.WriteLine("=== Гонка началась ===");
-            for (int lap = 0; lap<10; lap++)
-            {
-                if (temp == 100) // Soft
-                {
-                    aging -= 15;
-                    lapModificator = (aging > 30) ? -2.0 : +3.5;
-                }
-                else if (temp == 150) //Medium
-                {
-                    aging -= 10;
-                    lapModificator = (aging > 20) ? -0.5 : +1;
-                }
-                else if (temp == 200) //Hard
-                {
-                    aging -= 5;
-                    lapModificator = 1;
-                }
-
-
-                
-
-                double currentLapTime = baseLapTime + lapModificator + (rnd.NextDouble() * 0.5);
-                int EventChance = rnd.Next(1, 6);
-                if (EventChance == 3)
-                {
-                    Console.WriteLine("Жёлтые флаги! На трассе пейс-кар. Скорость падает!");
-                    currentLapTime += 15;
-                }
-
-                int crush = CrashSystem();
-
-                if (crush == 1)
-                {
-                    currentLapTime += 10;
-                }
-                else
-                {
-                    Console.WriteLine($"Отлично {Name}. Круг без проишествий");
-
-                }
-
-                totalTime += currentLapTime;
-                Console.WriteLine($"Текущий круг {lap+1}");
-
-                if (aging < 0)
-                {
-                    Console.WriteLine($"Состояние шин 0%. Шины умерли");
-                }
-                else
-                {
-                    Console.WriteLine($"Состояние шин {(aging * 100) / temp}%");
-                }
-                Console.WriteLine($"Текущее время круга {currentLapTime:F3}");
-                Console.WriteLine("\nНажмите любую клавишу для продолжения...");
-                Console.ReadKey();
-                Console.Clear();
-            }
-            Console.Clear();
-            Console.WriteLine("\n=== Гонка окончена! ===");
-
-            Console.WriteLine($"Ваше время {totalTime:F3}");
-            if (totalTime <= 830.0)
-            {
-                Console.WriteLine($"Simply Lovely. {Name} побеждает в гонке!!!");
-            }
-            else
-            {
-                Console.WriteLine("Хорошая работа, повезёт в следующий раз");
-            }
-
-        }
-
-        public void RestartRace()
-        {
-            userInput = "";
-            aging = 0;
-        }
-
-        public int CrashSystem()
-        {
-            Random rnd = new Random();
-
-            int CrushEvent = rnd.Next(1, 6);
-
-
-            if (CrushEvent >= 5)
-            {
-                Console.WriteLine("Вы потеряли переднее антикрыло! Время круга увеличено");
-                 return 1;
-            }
-            return 0;
-        }
-
-    }
-
 }
